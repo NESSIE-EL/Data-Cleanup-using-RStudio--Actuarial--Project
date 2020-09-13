@@ -203,6 +203,4 @@ AutoSett[AutoSett$SETTNUM == "71",]
 
 AutoSett[AutoSett$SETTNUM == "71","SETTLEMENT"] <- 37964
 
-
-knitr::opts_chunk$set(echo = TRUE)
 ```
