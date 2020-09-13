@@ -1,0 +1,208 @@
+---
+title: "Data cleanup with RStudio"
+author: "Nesserine ELMEDIOUNI"
+date: "13/09/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+```
+# Task 1: Read in unclean data and view from a high level view --#
+```{r setup, include=FALSE}
+setwd("")
+getwd()
+
+AutoSett <- read.csv("AutoSettlements_Messy.csv") 
+AutoSett
+AutoSett <- read.csv("AutoSettlements_Messy.csv", na.strings=c("")) #Replace any empty cells with NA
+AutoSett
+```
+### Look at data at a high level
+### How many rows?
+### How many columns?
+### What is the data type for each column?
+```{r setup, include=FALSE}
+head(AutoSett)
+tail(AutoSett)
+nrow(AutoSett)
+ncol(AutoSett)
+str(AutoSett)
+summary(AutoSett)
+```
+# Task 2: Filter missing data --#
+```{r setup, include=FALSE}
+```
+###Look for 60+ year olds, males with a settlement
+###Hint: Use which() function to handle NAs
+```{r setup, include=FALSE}
+AutoSett[(AutoSett$GENDER == 1 & AutoSett$AGE >= 60),]
+
+AutoSett[which(AutoSett$GENDER == 1 & AutoSett$AGE >= 60),]
+```
+# Task 3: Data Cleanup Stage --#
+```{r setup, include=FALSE}
+```
+### Important to make a backup copy before doing data manipulation
+```{r setup, include=FALSE}
+AutoSettBackup <- AutoSett
+AutoSettBackup
+```
+#-- Change SETTNUM to a factor variable, not integer
+```{r setup, include=FALSE}
+str(AutoSett)
+AutoSett$SETTNUM <- factor(AutoSett$SETTNUM)
+str(AutoSett)
+```
+# Task 4: Fixing missing data with known information --#
+```{r setup, include=FALSE}
+```
+###Return rows with any NAs
+```{r setup, include=FALSE}
+AutoSett[!complete.cases(AutoSett),] 
+```
+### Get rows where gender is NA
+```{r setup, include=FALSE}
+AutoSett[!complete.cases(AutoSett$GENDER),] #Return rows where gender = NA
+```
+### Replace the NAs for the gender column
+```{r setup, include=FALSE}
+AutoSett[AutoSett$SETTNUM == "21", "GENDER"] <- 2
+AutoSett[AutoSett$SETTNUM == "21", "GENDER"]
+head(AutoSett)
+AutoSett[AutoSett$SETTNUM == "47", "GENDER"] <- 2
+AutoSett[AutoSett$SETTNUM == "1128", "GENDER"] <- 1
+AutoSett[AutoSett$SETTNUM == "2018", "GENDER"] <- 1
+AutoSett[AutoSett$SETTNUM == "2756", "GENDER"] <- 2
+```
+### SETTNUM	      GENDER
+### 21	          2
+### 47	          2
+### 1128	        1
+### 2018	        1
+### 2756	        2
+```{r setup, include=FALSE}
+```
+### Check your results
+```{r setup, include=FALSE}
+```
+AutoSett[(AutoSett$SETTNUM == "21" | AutoSett$SETTNUM == "47" | 
+            AutoSett$SETTNUM == "1128" | AutoSett$SETTNUM == "2018" |
+           AutoSett$SETTNUM == "2756"),]
+```{r setup, include=FALSE}
+```
+# Task 5: Fix SEATBELT missing data using median impute method
+```{r setup, include=FALSE}
+AutoSett[!complete.cases(AutoSett),] 
+summary(AutoSett)
+
+median(AutoSett$SEATBELT, na.rm = TRUE)
+
+Seatbelt.Median <- median(AutoSett$SEATBELT, na.rm = TRUE)
+
+AutoSett[is.na(AutoSett$SEATBELT),]
+#37, 69, 120
+
+AutoSett[AutoSett$SETTNUM == "37", "SEATBELT"] <- Seatbelt.Median
+
+AutoSett[is.na(AutoSett$SEATBELT),"SEATBELT"] <- Seatbelt.Median
+```
+## Check your results
+```{r setup, include=FALSE}
+```
+AutoSett[(AutoSett$SETTNUM == "37" | AutoSett$SETTNUM == "69" |
+            AutoSett$SETTNUM == "120"),]
+```{r setup, include=FALSE}
+```
+## Check your results
+```{r setup, include=FALSE}
+AutoSett[!complete.cases(AutoSett),]
+```
+#  Task 6: Fix missing data for AGE using average age by occupation 
+
+### SETTNUM == 25 (engineering), 43 (Heath), 92 (Construction)
+
+### example for SETTNUM == 25 who is an engineer
+```{r setup, include=FALSE}
+Engineers <- AutoSett[AutoSett$Occupation == "Engineering",]
+Engineers
+mean(Engineers$AGE)
+mean(Engineers$AGE,na.rm = TRUE)
+Engineer.Mean <- mean(Engineers$AGE,na.rm = TRUE)
+Engineer.Mean
+
+AutoSett[!complete.cases(AutoSett),]
+```
+###SETTNUM == 25
+```{r setup, include=FALSE}
+AutoSett[AutoSett$Occupation == "Engineering" & is.na(AutoSett$AGE),
+         "AGE"] <- Engineer.Mean
+
+AutoSett[AutoSett$SETTNUM == "25",]
+```
+
+```{r setup, include=FALSE}
+AutoSett[!complete.cases(AutoSett),]
+```
+### Health: SETTNUM == 43
+```{r setup, include=FALSE}
+Health <- AutoSett[AutoSett$Occupation == "Health",]
+Health
+
+HealthAge.Mean <- mean(Health$AGE, na.rm = TRUE)
+HealthAge.Mean
+
+AutoSett[AutoSett$Occupation == "Health" & is.na(AutoSett$AGE), "AGE"] <- HealthAge.Mean
+
+AutoSett[!complete.cases(AutoSett),]
+
+AutoSett[!complete.cases(AutoSett),]
+
+AutoSett[AutoSett$SETTNUM == "92",]
+```
+### Construction: SETTNUM == 92
+```{r setup, include=FALSE}
+Construction <- AutoSett[AutoSett$Occupation == "Construction",]
+Construction
+
+ConstructionAge.Mean <- mean(Construction$AGE, na.rm = TRUE)
+ConstructionAge.Mean
+
+AutoSett[AutoSett$Occupation == "Construction" & is.na(AutoSett$AGE),
+         "AGE"] <- ConstructionAge.Mean
+```
+# Task 7: Clean messy data in SETTLEMENT column by replacement --#
+```{r setup, include=FALSE}
+head(AutoSett, n=20)
+```
+### Fix SETTLEMENT data for SETTNUM == 10 ($,), 37(dollars), 71 (-)
+```{r setup, include=FALSE}
+```
+### gsub() does a replacement for all matches
+```{r setup, include=FALSE}
+AutoSett[AutoSett$SETTNUM == "10",] 
+AutoSett$SETTLEMENT <- gsub(",","",AutoSett$SETTLEMENT)
+```
+### head(AutoSett)
+```{r setup, include=FALSE}
+AutoSett$SETTLEMENT <- gsub("\\$","",AutoSett$SETTLEMENT)
+
+AutoSett[AutoSett$SETTNUM == "10","SETTLEMENT"] <- 42586
+```
+### Now fix the SETTLEMENT entries for SETTNUM == 37 and 71
+### For SETTNUM == 37, remove the " dollars" from the value
+### For SETTNUM == 71, change the sign from negative to positive
+
+####For SETTNUM == 37
+```{r setup, include=FALSE}
+AutoSett[AutoSett$SETTNUM == "37",] 
+AutoSett$SETTLEMENT <- gsub(" dollars","",AutoSett$SETTLEMENT)
+```
+###For SETTNUM == 71
+```{r setup, include=FALSE}
+AutoSett[AutoSett$SETTNUM == "71",]
+
+AutoSett[AutoSett$SETTNUM == "71","SETTLEMENT"] <- 37964
+
+
+knitr::opts_chunk$set(echo = TRUE)
+```
